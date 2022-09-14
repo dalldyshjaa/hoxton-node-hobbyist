@@ -14,16 +14,15 @@ datasource db {
 model User {
   id Int @id @default(autoincrement())
   fullName String 
-  photoUrl String
+  photoUrl String?
   email String @unique
   hobies Hoby[]
 }
 
 model Hoby {
   id Int @id @default(autoincrement())
-  name String
+  name String @unique
   active Boolean @default(false)
-  photoUrl String
-  user User @relation(fields: [userId], references: [id])
-  userId Int
+  photoUrl String?
+  users User[]
 }

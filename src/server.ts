@@ -15,20 +15,37 @@ app.get("/users", async (req, res) => {
   res.send(users);
 });
 
+app.post("/users", async (req, res) => {
+  let hobies = req.body.hobies ? req.body.hobies : [];
+  const newUser = await prisma.user.create({
+    data: {
+      fullName: req.body.fullName,
+      photoUrl: req.body.photoUrl,
+      email: req.body.email,
+      hobies: {
+        // @ts-ignore
+        connectOrCreate: hobies.map((hoby) => ({
+          where: {
+            name: hoby,
+          },
+          create: {
+            name: hoby,
+          },
+        })),
+      },
+    },
+
+    include: { hobies: true },
+  });
+  res.send(newUser);
+});
+
 app.get("/users/:id", async (req, res) => {
   const user = await prisma.user.findUnique({
     where: { id: Number(req.params.id) },
     include: { hobies: true },
   });
   res.send(user);
-});
-
-app.post("/users", async (req, res) => {
-  const newUser = await prisma.user.create({
-    data: req.body,
-    include: { hobies: true },
-  });
-  res.send(newUser);
 });
 
 app.delete("/users/:id", async (req, res) => {
@@ -48,26 +65,25 @@ app.patch("/users/:id", async (req, res) => {
 });
 
 app.get("/hobies", async (req, res) => {
-  const hobies = await prisma.hoby.findMany({ include: { user: true } });
+  //@ts-ignore
+  const hobies = await prisma.hoby.findMany({ include: { users: true } });
   res.send(hobies);
 });
 
 app.get("/hobies/:id", async (req, res) => {
   const hoby = await prisma.hoby.findUnique({
     where: { id: Number(req.params.id) },
-    include: { user: true },
+    //@ts-ignore
+    include: { users: true },
   });
   res.send(hoby);
 });
 
-//This one was hard i think i made it work
-
-app.post("/hobies/:id", async (req, res) => {
-  req.body.user.connect.id = Number(req.params.id);
-
+app.post("/hobies", async (req, res) => {
   const newHoby = await prisma.hoby.create({
     data: req.body,
-    include: { user: true },
+    //@ts-ignore
+    include: { users: true },
   });
   res.send(newHoby);
 });
@@ -76,7 +92,8 @@ app.patch("/hobies/:id", async (req, res) => {
   const updatedHoby = await prisma.hoby.update({
     where: { id: Number(req.params.id) },
     data: req.body,
-    include: { user: true },
+    //@ts-ignore
+    include: { users: true },
   });
   res.send(updatedHoby);
 });
